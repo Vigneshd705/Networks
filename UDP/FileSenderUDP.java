@@ -8,8 +8,14 @@ public class FileSenderUDP {
         
         try {
             socket = new DatagramSocket();
-            InetAddress clientAddress = InetAddress.getByName("localhost"); // Client IP address
-            int port = 5001; // Client port number
+            // InetAddress clientAddress = InetAddress.getByName("localhost"); // Client IP address
+            // int port = 5001; // Client port number
+            DatagramPacket initialPacket = new DatagramPacket(buffer, buffer.length);
+            socket.receive(initialPacket);
+
+            InetAddress clientAddress = initialPacket.getAddress();
+            int port = initialPacket.getPort();
+
             File file = new File("file_to_send.txt"); // File to send
             fis = new FileInputStream(file);
             byte[] buffer = new byte[4096]; // Buffer to hold file chunks

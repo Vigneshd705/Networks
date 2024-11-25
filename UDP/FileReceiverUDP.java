@@ -5,8 +5,12 @@ public class FileReceiverUDP {
         DatagramSocket socket = null;
         FileOutputStream fos = null;
         try {
+            
             socket = new DatagramSocket(5001); // Server will send to this port
-            fos = new FileOutputStream("received_file.txt"); // File to save the received data
+            fos = new FileOutputStream("received_file.txt"); 
+            byte[] initData = new byte[1];
+            DatagramPacket initPacket = new DatagramPacket(initData, initData.length, serverAddress, serverPort);
+            socket.send(initPacket);// File to save the received data
             byte[] buffer = new byte[4096]; // Buffer for receiving file chunks
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);

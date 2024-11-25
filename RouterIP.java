@@ -1,37 +1,56 @@
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
 import java.util.Scanner;
 
-class DnsServer {
-    public static void main(String[] args) throws Exception {
-        Process process = Runtime.getRuntime().exec("nslookup");
-        Scanner scanner = new Scanner(process.getInputStream());
-        String ipAddress = null;
-		while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            if (line.contains("Address")) {
-                ipAddress = line.split(":")[1].trim();
-                System.out.println("DNS Server Address: " + ipAddress);
-                break;
-            }
-        }
-        scanner.close();
-		if (ipAddress != null) {
-            InetAddress inetAddress = InetAddress.getByName(ipAddress);
-            String hostname = inetAddress.getHostName();
-            System.out.println("Hostname: " + hostname);
-        }
-
-        String hostNameToResolve = "www.amazon.com";
-        InetAddress[] addresses = InetAddress.getAllByName(hostNameToResolve);
-        System.out.println("IP addresses for " + hostNameToResolve + ":");
-
+class RouterIP {
+    public static void main(String[] args) {
+        String ipAddress = "";
         try {
-            for (InetAddress address : addresses) {
-                System.out.println(address.getHostAddress());
+            Process process = Runtime.getRuntime().exec("ipconfig");
+            Scanner reader = new Scanner(process.getInputStream());
+            String line;
+            while (reader.hasNextLine()) {
+                line = reader.nextLine();
+                if (line.trim().startsWith("Default Gateway")) {
+                    int colonIndex = line.indexOf(":");
+                    if (colonIndex != -1) { // Ensure ':' is present
+                        ipAddress = line.substring(colonIndex + 1).trim();
+                        if (!ipAddress.isEmpty())
+                        System.out.println("Router IP Address: " + ipAddress);
+                    } else {
+                        System.out.println("Default Gateway format is incorrect.");
+                    }
+                }
             }
-        } catch (Exception e) {
-            System.out.println(e);
+            reader.close(); // Close the Scanner
+
+            if (ipAddress.isEmpty()) {
+                System.out.println("Router IP Address not found.");
+                return; // Exit if no IP address is found
+            }
+
+            process = Runtime.getRuntime().exec("arp -a");
+            reader = new Scanner(process.getInputStream());
+            boolean macFound = false;
+            while (reader.hasNextLine()) {
+                line = reader.nextLine();
+                if (line.trim().startsWith(ipAddress)) {
+                    String[] parts = line.split("\\s+"); // Split by whitespace
+                    if (parts.length >= 2) { // Ensure there are enough parts
+                        String macAddress = parts[1];
+                        System.out.println("Router MAC Address: " + macAddress);
+                        macFound = true;
+                    }
+                    break;
+                }
+            }
+            reader.close(); // Close the Scanner
+
+            if (!macFound) {
+                System.out.println("MAC Address not found for IP Address: " + ipAddress);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
